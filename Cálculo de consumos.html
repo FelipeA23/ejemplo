@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presupuesto de Electricidad</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            color: black;
+            padding: 0;
+            margin: 0;
+            background-color: #f0f0f0;
+            background-image: url('Cálculo de consumos.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Esto mantiene el fondo fijo mientras se desplaza la página */
+        }
+
+        /* Estilos adicionales para dispositivos móviles */
+        @media screen and (max-width: 768px) {
+            body {
+                background-image: none; /* Eliminar la imagen de fondo en pantallas pequeñas */
+                background-color: #f0f0f0; /* Establecer un fondo de color en su lugar */
+            }
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        /* Estilos para la tabla */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            background-color: #fff;
+            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+            margin: 10px auto;
+        }
+
+        table thead {
+            background-color: #333;
+            color: #fff;
+        }
+
+        table th, table td {
+            padding: 1px;
+            text-align: center;
+        }
+
+        /* Estilo para la casilla de USOS */
+        td.usos {
+            text-align: left;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Estilos para la marca de agua del propietario */
+        .owner-watermark {
+            position: fixed;
+            bottom: 10px; /* Ajusta la posición vertical según tus preferencias */
+            left: 50px; /* Ajusta la posición horizontal según tus preferencias */
+            font-size: 12px; /* Ajusta el tamaño de fuente según tus preferencias */
+            color: rgba(0, 0, 0, 0.3); /* Color y opacidad del texto */
+        }
+
+        /* Estilos para botones */
+        button {
+            background-color: #333;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            margin: 1px;
+        }
+
+        /* Estilos para el pie de página */
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.3);
+            margin-top: 30px;
+        }
+    </style>
+    <script>
+        // Función para validar una celda editada
+        function validarCelda(event) {
+            var cell = event.target;
+            var valor = cell.innerText.trim();
+
+            // Validación para el costo por kWh
+            if (cell.cellIndex === 2) {
+                if (/^\d+(\.\d{1,2})?$/.test(valor)) {
+                    var costoKwh = parseFloat(valor);
+                    if (!isNaN(costoKwh) && costoKwh >= 0 && costoKwh <= 1000) {
+                        cell.innerText = "$" + costoKwh.toFixed(2);
+                    } else {
+                        cell.innerText = "";
+                    }
+                } else {
+                    cell.innerText = "";
+                }
+            }
+
+            // Validación para la potencia
+            if (cell.cellIndex === 3) {
+                if (/^\d+(\s*W)?$/.test(valor)) {
+                    var valorNumerico = parseFloat(valor);
+                    if (!isNaN(valorNumerico)) {
+                        if (valorNumerico < 1000) {
+                            // Convertir de W a KW si es menor a 1000 W
+                            valorNumerico /= 1000;
+                            cell.innerText = valorNumerico.toFixed(2) + " KW";
+                        } else {
+                            cell.innerText = (valorNumerico / 1000).toFixed(2) + " KW";
+                        }
+                    } else {
+                        cell.innerText = "";
+                    }
+                } else {
+                    cell.innerText = "";
+                }
+            }
+
+            // Validación para la cantidad de bocas
+            if (cell.cellIndex === 4) {
+                if (/^\d+(\s*U)?$/.test(valor)) {
+                    var numero = parseInt(valor);
+                    if (!isNaN(numero) && numero >= 0 && numero <= 1000) {
+                        cell.innerText = numero + " U";
+                    } else {
+                        cell.innerText = "";
+                    }
+                } else {
+                    cell.innerText = "";
+                }
+            }
+
+            // Validación para las horas
+            if (cell.cellIndex === 5) {
+                if (/^\d+(\s*Hs)?$/.test(valor)) {
+                    var numero = parseFloat(valor);
+                    if (!isNaN(numero) && numero >= 1 && numero <= 24) { // Rango de 1 a 24 horas
+                        cell.innerText = numero.toFixed(2) + " Hs";
+                    } else {
+                        cell.innerText = "";
+                    }
+                } else {
+                    cell.innerText = "";
+                }
+            }
+
+            // Validación para los días
+            if (cell.cellIndex === 6) {
+                if (/^\d+$/.test(valor)) {
+                    var dias = parseInt(valor);
+                    if (!isNaN(dias) && dias >= 1 && dias <= 31) {
+                        cell.innerText = dias;
+                    } else {
+                        cell.innerText = "";
+                    }
+                } else {
+                    cell.innerText = "";
+                }
+            }
+
+            // Recalcular el costo total cuando se modifica cualquier celda
+            calcularCostoTotal(cell.parentNode);
+        }
+
+        // Función para calcular el costo total de un servicio eléctrico
+        function calcularCostoTotal(fila) {
+            var costoKwhCell = fila.cells[2];
+            var potenciaCell = fila.cells[3];
+            var cantidadBocasCell = fila.cells[4];
+            var horasCell = fila.cells[5];
+            var diasCell = fila.cells[6];
+            var costoTotalCell = fila.cells[7];
+
+            var costoKwh = parseFloat(costoKwhCell.innerText.replace('$', ''));
+            var potencia = parseFloat(potenciaCell.innerText.replace('KW', ''));
+            var cantidadBocas = parseInt(cantidadBocasCell.innerText);
+            var horas = parseFloat(horasCell.innerText.replace('Hs', ''));
+            var dias = parseInt(diasCell.innerText);
+
+            if (!isNaN(costoKwh) && !isNaN(potencia) && !isNaN(cantidadBocas) && !isNaN(horas) && !isNaN(dias)) {
+                var costoTotal = (costoKwh * potencia * cantidadBocas * dias) * horas;
+                costoTotalCell.innerText = "$" + costoTotal.toFixed(2);
+            } else {
+                costoTotalCell.innerText = "";
+            }
+
+            // Actualizar el costo total general
+            calcularCostoTotalGeneral();
+        }
+
+        // Función para eliminar una fila
+        function eliminarFila(fila) {
+            var tabla = fila.parentNode;
+            tabla.deleteRow(fila.rowIndex);
+
+            // Actualizar el costo total general
+            calcularCostoTotalGeneral();
+        }
+
+        // Función para agregar una nueva fila
+        function agregarFila() {
+            var tabla = document.querySelector('table').getElementsByTagName('tbody')[0];
+            var fila = tabla.insertRow(-1);
+
+            // Columna de "USOS" (menú desplegable)
+            var usosCell = fila.insertCell(0);
+            usosCell.className = "usos";
+            var selectHTML = `
+                <select onchange="onUsosChange(event)">
+                    <option value="">Seleccione un uso</option>
+                    <option value="Iluminación">Iluminación</option>
+                    <option value="T.U.G">Toma uso gral</option>
+                    <option value="T.U.E">Toma uso específico</option>
+                    <option value="Ventilación">Ventilación</option>
+                    <option value="Extracción">Extracción baño/cocina</option>
+                    <option value="Calefacción">Calefacción</option>
+                    <option value="TV/PC/Audio">Entretenimiento/electrónica</option>
+                    <option value="Cocina/anafe">Cocina/anafe</option>
+                    <option value="Lavadora/secadora">Lavandería</option>
+                    <option value="Limpieza">Limpieza</option>
+                    <option value="Luz emergencia">Luz emergencia</option>
+                    <option value="Cuidado personal">Cuidado personal</option>
+                </select>
+            `;
+            usosCell.innerHTML = selectHTML;
+
+            // Columna de "Electrodoméstico"
+            var electrodomesticoCell = fila.insertCell(1);
+            var selectHTML = `
+                <select onchange="onDescripcionChange(event)">
+                    <option value="">Seleccione un electrodoméstico</option>
+                    <option value="Luz uso gral">Luz uso gral</option>
+                    <option value="Luz emergencia">Luz emergencia</option>
+                    <option value="Toma uso gral">Toma uso gral</option>
+                    <option value="Termotanque">Termotanque</option>
+                    <option value="Afeitadora">Afeitadora</option>
+                    <option value="Secador de pelo">Secador de pelo</option>
+                    <option value="Plancha de pelo">Plancha de pelo</option>
+                    <option value="Bomba de agua">Bomba de agua</option>
+                    <option value="Cocina/anafe">Cocina/anafe</option>
+                    <option value="Convector/estufa">Convector/estufa</option>
+                    <option value="Horno">Horno</option>
+                    <option value="Lavarropas">Lavarropas</option>
+                    <option value="Secarropas">Secarropas</option>
+                    <option value="Aire acondicionado">AA/portatil</option>
+                    <option value="Ventilador techo/pie">Ventilador techo/pie</option>
+                    <option value="Extractor Baño">Baño</option>
+                    <option value="Extractor Cocina">Cocina</option>
+                    <option value="Televisor">TV</option>
+                    <option value="PC escritorio/notebook">PC</option>
+                    <option value="Equipo de sonido">Sonido</option>
+                    <option value="Aspiradora">Aspiradora</option>
+                    <option value="Hidrolavadora">Hidrolavadora</option>
+                    <option value="Pulido/encerado">Pulidora/enceradora</option>
+                </select>
+            `;
+            electrodomesticoCell.innerHTML = selectHTML;
+
+            // Columnas editables (Costo por kWh, Potencia, Cantidad de Bocas, Días, Horas)
+            for (var i = 2; i <= 6; i++) {
+                var editableCell = fila.insertCell(i);
+                editableCell.contentEditable = true;
+                editableCell.addEventListener("blur", function (event) {
+                    validarCelda(event);
+                });
+                editableCell.addEventListener("keydown", function (event) {
+                    if (event.keyCode === 13) {
+                        moverSiguienteCelda(event);
+                        return false;
+                    }
+                });
+            }
+
+            // Columna de "Costo Total"
+            var costoTotalCell = fila.insertCell(7);
+            costoTotalCell.innerText = "";
+
+            // Columna de "Acción" (Botón de Eliminar)
+            var accionCell = fila.insertCell(8);
+            var eliminarBoton = document.createElement("button");
+            eliminarBoton.innerText = "Eliminar";
+            eliminarBoton.addEventListener("click", function () {
+                eliminarFila(fila);
+            });
+            accionCell.appendChild(eliminarBoton);
+
+            // Actualizar el costo total general
+            calcularCostoTotalGeneral();
+        }
+
+        // Función para calcular el costo total general
+        function calcularCostoTotalGeneral() {
+            var filas = document.querySelectorAll('tbody tr');
+            var costoTotalGeneral = 0;
+
+            filas.forEach(function (fila) {
+                var costoTotalCell = fila.cells[7];
+                var costoTotal = parseFloat(costoTotalCell.innerText.replace('$', ''));
+                if (!isNaN(costoTotal)) {
+                    costoTotalGeneral += costoTotal;
+                }
+            });
+
+            // Actualizar el elemento que muestra el costo total general
+            var costoTotalGeneralElement = document.getElementById('costoTotal');
+            costoTotalGeneralElement.innerText = "Costo Total: $" + costoTotalGeneral.toFixed(2);
+        }
+
+        // Función para cargar datos iniciales
+        function cargarDatosIniciales() {
+            agregarFila(); // Agregar una fila inicial
+        }
+
+        // Función para manejar el cambio en el menú desplegable de USOS
+        function onUsosChange(event) {
+            var select = event.target;
+            var fila = select.parentNode.parentNode; // Obtén la fila actual
+
+            // Actualiza el valor del uso en la fila
+            var usoCell = fila.cells[0];
+            usoCell.innerText = select.value;
+
+            // Recalcula el costo total
+            calcularCostoTotal(fila);
+        }
+
+        // Ejecutar la función para cargar datos iniciales al cargar la página
+        window.addEventListener('load', cargarDatosIniciales);
+    </script>
+</head>
+<body>
+    <h1>Cálculo de consumos eléctricos</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>USOS</th>
+                <th>Electrodoméstico</th>
+                <th>Costo por kWh</th>
+                <th>Potencia (KW)</th>
+                <th>Cantidad de Bocas</th>
+                <th>Horas (Hs)</th>
+                <th>Días</th>
+                <th>Costo</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Aquí se agregarán las filas -->
+        </tbody>
+    </table>
+    <button onclick="agregarFila()">Agregar Fila</button>
+
+    <!-- Marca de agua del propietario -->
+    <div class="owner-watermark">Propiedad de [Felipe Alarcón]</div>
+
+    <!-- Nuevo elemento para mostrar el costo total -->
+    <div id="costoTotal">
+        <strong>Costo Total:</strong> $0.00
+    </div>
+
+    <!-- Pie de página -->
+    <div class="footer">
+        Derechos de autor © 2023
+    </div>
+</body>
+</html>

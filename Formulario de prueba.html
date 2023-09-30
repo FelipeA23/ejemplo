@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Solicitud de Presupuesto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        fieldset {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        legend {
+            font-weight: bold;
+        }
+
+        input[type="submit"] {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Solicitud de Presupuesto</h1>
+    <p>Por favor, complete el formulario para solicitar un presupuesto.</p>
+
+    <form action="procesar_formulario.php" method="post">
+        <fieldset>
+            <legend>Detalles del Trabajo</legend>
+            <label for="tipo_trabajo">Tipo de Trabajo:</label>
+            <select name="tipo_trabajo" id="tipo_trabajo" required>
+                <option value="instalacion">Instalación eléctrica</option>
+                <option value="reparacion">Reparación eléctrica</option>
+                <option value="luces">Luminarias</option>
+                <option value="otros">Otros</option>
+            </select><br><br>
+
+            <!-- Campo de texto para el detalle del trabajo (condicional) -->
+            <div id="detalle_reparacion" style="display: none;">
+                <label for="detalle_trabajo">Detalle del Trabajo:</label>
+                <textarea name="detalle_trabajo" id="detalle_trabajo" rows="4"></textarea><br><br>
+            </div>
+
+            <!-- Campo de selección múltiple para el tipo de canalización -->
+            <label>Seleccione el Tipo de Canalización:</label><br>
+            <input type="checkbox" name="tipo_canalizacion[]" value="cablecanal"> Cablecanal
+            <input type="checkbox" name="tipo_canalizacion[]" value="caño_pvc_rigido"> Caño PVC Rígido
+            <input type="checkbox" name="tipo_canalizacion[]" value="caño_metalico"> Caño Metálico
+            <input type="checkbox" name="tipo_canalizacion[]" value="bandeja_portacables"> Bandeja Portacables
+            <br>
+
+            <!-- Script JavaScript para mostrar/ocultar campos de metros de canalización -->
+            <script>
+                const tipoTrabajoSelect = document.getElementById('tipo_trabajo');
+                const detalleReparacionDiv = document.getElementById('detalle_reparacion');
+
+                tipoTrabajoSelect.addEventListener('change', function() {
+                    if (tipoTrabajoSelect.value === 'reparacion') {
+                        detalleReparacionDiv.style.display = 'block';
+                    } else {
+                        detalleReparacionDiv.style.display = 'none';
+                    }
+                });
+            </script>
+            <br>
+
+            <!-- Campos de metros de canalización -->
+            <div id="cantidad_canalizacion" style="display: none;">
+                <label for="metros_cablecanal">Metros de Cablecanal:</label>
+                <input type="number" name="metros_cablecanal" id="metros_cablecanal"><br><br>
+
+                <label for="metros_caño_pvc_rigido">Metros de Caño PVC Rígido:</label>
+                <input type="number" name="metros_caño_pvc_rigido" id="metros_caño_pvc_rigido"><br><br>
+
+                <label for="metros_cano_metalico">Metros de Caño Metálico:</label>
+                <input type="number" name="metros_cano_metalico" id="metros_cano_metalico"><br><br>
+
+                <label for="metros_bandeja_portacables">Metros de Bandeja Portacables:</label>
+                <input type="number" name="metros_bandeja_portacables" id="metros_bandeja_portacables"><br><br>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Armado de Tablero / Refacción de Tablero</legend>
+            <!-- Selección de Armado de Tablero o Refacción de Tablero -->
+            <label for="armado_tablero">Armado de Tablero:</label>
+            <input type="checkbox" name="armado_tablero" id="armado_tablero"><br><br>
+
+            <label for="refaccion_tablero">Refacción de Tablero:</label>
+            <input type="checkbox" name="refaccion_tablero" id="refaccion_tablero"><br><br>
+
+            <!-- Campo de selección para el Tipo de Tablero -->
+            <label for="tipo_tablero">Tipo de Tablero:</label>
+            <select name="tipo_tablero" id="tipo_tablero">
+                <option value="plastico">Plástico</option>
+                <option value="metalico">Metálico</option>
+            </select><br><br>
+        </fieldset>
+
+        <fieldset>
+            <legend>Servicios Adicionales</legend>
+            <!-- Selección de Colocación de Luces -->
+            <label for="colocacion_luces">Colocación de Luces:</label>
+            <input type="checkbox" name="colocacion_luces" id="colocacion_luces"><br><br>
+
+            <!-- Campo de selección para Opciones de Iluminación (condicional) -->
+            <div id="opciones_iluminacion" style="display: none;">
+                <label for="iluminacion_opciones">Opciones de Iluminación:</label>
+                <select name="iluminacion_opciones" id="iluminacion_opciones" multiple>
+                    <option value="luz_embutir">Luz de Embutir</option>
+                    <option value="luz_sobreponer">Luz de Sobreponer</option>
+                    <option value="aplique_pared">Aplique de Pared</option>
+                    <option value="aplique_pared_2_mas">Aplique de Pared de 2 Luces o Más</option>
+                    <option value="luz_colgante">Luz Colgante</option>
+                    <option value="luz_colgante_2_mas">Luz Colgante de 2 Luces o Más</option>
+                    <option value="luz_jardin">Luz para Jardín</option>
+                    <option value="tiras_led">Tiras de LED</option>
+                </select><br><br>
+            </div>
+
+            <!-- Script JavaScript para mostrar/ocultar opciones de iluminación -->
+            <script>
+                const colocacionLucesCheckbox = document.getElementById('colocacion_luces');
+                const opcionesIluminacionDiv = document.getElementById('opciones_iluminacion');
+
+                colocacionLucesCheckbox.addEventListener('change', function() {
+                    if (colocacionLucesCheckbox.checked) {
+                        opcionesIluminacionDiv.style.display = 'block';
+                    } else {
+                        opcionesIluminacionDiv.style.display = 'none';
+                    }
+                });
+            </script>
+            <br>
+
+            <!-- Selección de Arreglo de Tomacorrientes -->
+            <label for="arreglo_tomacorrientes">Arreglo de Tomacorrientes:</label>
+            <input type="checkbox" name="arreglo_tomacorrientes" id="arreglo_tomacorrientes"><br><br>
+
+            <!-- Campo de entrada para la Cantidad de Tomacorrientes (condicional) -->
+            <div id="cantidad_tomacorrientes" style="display: none;">
+                <label for="cantidad_tomacorrientes">Cantidad de Tomacorrientes a Reemplazar o Agregar:</label>
+                <input type="number" name="cantidad_tomacorrientes" id="cantidad_tomacorrientes"><br><br>
+            </div>
+            <br>
+
+            <!-- Selección de Arreglo de Teclas de Luz -->
+            <label for="arreglo_teclas_luz">Arreglo de Teclas de Luz:</label>
+            <input type="checkbox" name="arreglo_teclas_luz" id="arreglo_teclas_luz"><br><br>
+
+            <!-- Campo de entrada para la Cantidad de Teclas de Luz (condicional) -->
+            <div id="cantidad_teclas_luz" style="display: none;">
+                <label for="cantidad_teclas_luz">Cantidad de Teclas de Luz a Reemplazar o Agregar:</label>
+                <input type="number" name="cantidad_teclas_luz" id="cantidad_teclas_luz"><br><br>
+            </div>
+            <br>
+
+            <!-- Selección de Colocación de Artefactos -->
+            <label for="colocacion_artefactos">Colocación de Artefactos:</label>
+            <input type="checkbox" name="colocacion_artefactos" id="colocacion_artefactos"><br><br>
+        </fieldset>
+
+        <input type="submit" value="Enviar Solicitud">
+    </form>
+</body>
+</html>
